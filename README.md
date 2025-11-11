@@ -25,7 +25,7 @@ A production-quality open-source software stack enabling PyTorch and TensorFlow 
 
 ```bash
 # Clone the repository
-git clone https://github.com/rdna-stack/rdna-stack
+git clone https://github.com/BurnedOx/rdna_stack
 cd rdna-stack
 
 # Build from source
