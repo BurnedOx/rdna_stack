@@ -1,0 +1,178 @@
+name: RDNA Stack CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pybind11 numpy pytest
+        
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SIMULATION=ON
+        
+    - name: Build project
+      run: |
+        cd build
+        make -j$(nproc)
+        
+    - name: Run basic tests
+      run: |
+        cd build
+        python -m pytest ../tests/test_basic.py -v
+        
+    - name: Run example
+      run: |
+        cd build
+        python ../examples/basic_usage.py
+
+  build-macos:
+    runs-on: macos-12
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install dependencies
+      run: |
+        brew install cmake
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pybind11 numpy pytest
+        
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SIMULATION=ON
+        
+    - name: Build project
+      run: |
+        cd build
+        make -j$(sysctl -n hw.ncpu)
+        
+    - name: Run basic tests
+      run: |
+        cd build
+        python -m pytest ../tests/test_basic.py -v
+
+  code-quality:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Check code formatting
+      run: |
+        pip install black
+        black --check --diff python/ examples/ tests/
+        
+    - name: Check for TODOs
+      run: |
+        echo "Checking for unresolved TODOs:"
+        grep -r "TODO" include/ src/ python/ || echo "No TODOs found"
+
+  documentation:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+        
+    - name: Check documentation links
+      run: |
+        # Check if README.md has all necessary sections
+        grep -q "## Features" README.md && echo "Features section found"
+        grep -q "## Quick Start" README.md && echo "Quick Start section found"
+        grep -q "## Installation" README.md && echo "Installation section found"
+        
+    - name: Validate design document
+      run: |
+        [ -f design.md ] && echo "Design document exists" || echo "Design document missing"
+
+  security:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+        
+    - name: Check for sensitive information
+      run: |
+        # Check for potential secrets
+        if grep -r "password\|secret\|key" --include="*.py" --include="*.cpp" --include="*.h" .; then
+          echo "Potential secrets found. Please review."
+          exit 1
+        fi
+        
+    - name: License check
+      run: |
+        [ -f LICENSE ] && echo "License file exists" || exit 1
+        grep -q "Apache License" LICENSE && echo "Apache license confirmed"
+
+  rocm-integration:
+    runs-on: ubuntu-22.04
+    # This job requires ROCm-enabled runners (commented out for now)
+    # Uncomment when ROCm runners are available
+    if: false
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        
+    - name: Set up ROCm
+      run: |
+        # This would install ROCm on a supported runner
+        echo "ROCm integration tests would run here"
+        
+    - name: Build with ROCm
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make -j$(nproc)
+        
+    - name: Run ROCm tests
+      run: |
+        cd build
+        ctest -V

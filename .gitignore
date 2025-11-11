@@ -1,0 +1,70 @@
+# Build directories
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+.python-version
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+docs/_build/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Binary files
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# ROCm specific
+*.hipfb
+*.hsaco
+
+# Package files
+*.tar.gz
+*.whl
+
+# Test outputs
+test_results/
+perf_results/
+
+# Coverage reports
+.coverage
+.coverage.*
